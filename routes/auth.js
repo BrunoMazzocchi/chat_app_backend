@@ -8,7 +8,7 @@ const { Router } = require('express');
 const { check } = require('express-validator');
 
 const router = Router();
-const { createUser, login } = require('../controllers/auth');
+const { createUser, login, renewToken } = require('../controllers/auth');
 const { validateFields } = require('../middlewares/validate_fields');
 
 router.post('/new', [
@@ -24,5 +24,11 @@ router.post('/new', [
 ], createUser);
 
 router.post('/', login);
+
+router.post('/renew', [
+    check('uid', 'uid is required').not().isEmpty(),
+    check('token', 'token is required').not().isEmpty(),
+    validateFields
+] , renewToken)
 
 module.exports = router;

@@ -2,6 +2,7 @@ const { response } = require('express');
 const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const { generateJWT } = require('../helpers/jwt');
+const DeletedToken = require('../models/deleted_token');
 
 const createUser = async (req, res = response) => {
 
@@ -98,7 +99,58 @@ const login = async (req, res = response) => {
     }
 }
 
+const renewToken = async (req, res = response) => {
+    const uid = req.uid;
+    const prevToken = req.token;
+
+
+    try {
+        
+        // Check if token is valid
+        const isTokenValid = await DeletedToken.findOne( prevToken );
+        if (isTokenValid) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'Token is not valid.'
+            });
+        }
+        
+
+        // Generate new token
+        const token = await generateJWT(uid);
+            
+        // Get user by uid
+        const user = await User.findOne({ uid });
+        if (!user) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'User does not exist.'
+            });
+        } 
+        
+        // Delete previous token
+        const deletedToken = new DeletedToken(req.body);
+        await deletedToken.save();
+
+        res.json({
+            ok: true,
+            user, 
+            token
+        });
+        
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            ok: false,
+            msg: 'Unable to generate new token. Please contact the administrator'
+        });
+    }
+
+
+}
+
 module.exports = {
     createUser,
-    login
+    login,
+    renewToken
 }
