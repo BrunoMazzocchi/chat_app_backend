@@ -3,6 +3,7 @@ const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const { generateJWT } = require('../helpers/jwt');
 const DeletedToken = require('../models/deleted_token');
+const jwt = require('jsonwebtoken');
 
 const createUser = async (req, res = response) => {
 
@@ -100,52 +101,51 @@ const login = async (req, res = response) => {
 }
 
 const renewToken = async (req, res = response) => {
-    const uid = req.uid;
-    const prevToken = req.token;
-
+    const prevToken = req.header('x-token');
 
     try {
-        
-        // Check if token is valid
-        const isTokenValid = await DeletedToken.findOne( prevToken );
-        if (isTokenValid) {
-            return res.status(400).json({
-                ok: false,
-                msg: 'Token is not valid.'
-            });
-        }
-        
 
-        // Generate new token
-        const token = await generateJWT(uid);
-            
-        // Get user by uid
-        const user = await User.findOne({ uid });
-        if (!user) {
-            return res.status(400).json({
-                ok: false,
-                msg: 'User does not exist.'
-            });
-        } 
+    
+        try {
+            const uid = jwt.verify(prevToken, process.env.JWT_KEY).uid;
+            const user = await User.findById(uid);
         
-        // Delete previous token
-        const deletedToken = new DeletedToken(req.body);
+            if (!user) {
+                return res.status(500).json({
+                    ok: false,
+                    msg: 'User or token not valid'
+                });
+
+            } 
+            // Saves the token in the deleted_token collection
+
+        const deletedToken = new DeletedToken({ token: prevToken });
         await deletedToken.save();
+
+        // Generates a new token
+
+        const token = await generateJWT(user.id);
 
         res.json({
             ok: true,
-            user, 
+
+            user,
             token
         });
-        
+        } catch (error) {
+            return res.status(500).json({
+                ok: false,
+                msg: 'User or token not valid'
+            });
+        }
+       
     } catch (error) {
-        console.log(error);
+        console.error('Error generating new token:', error);
         return res.status(500).json({
             ok: false,
-            msg: 'Unable to generate new token. Please contact the administrator'
+            msg: 'User or token not valid'
         });
     }
-
 
 }
 
