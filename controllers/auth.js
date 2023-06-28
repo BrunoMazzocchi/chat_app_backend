@@ -119,8 +119,7 @@ const renewToken = async (req, res = response) => {
             } 
             // Saves the token in the deleted_token collection
 
-        const deletedToken = new DeletedToken({ token: prevToken });
-        await deletedToken.save();
+      
 
         // Generates a new token
 

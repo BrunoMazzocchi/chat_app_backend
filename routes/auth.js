@@ -10,7 +10,7 @@ const { check } = require('express-validator');
 const router = Router();
 const { createUser, login, renewToken } = require('../controllers/auth');
 const { validateFields } = require('../middlewares/validate_fields');
-
+const { validateToken } = require('../middlewares/validate_token');
 router.post('/new', [
     check('name', 'Name is required').not().isEmpty(),
     check('email', 'Email is required').not().isEmpty(),
@@ -25,10 +25,6 @@ router.post('/new', [
 
 router.post('/', login);
 
-router.post('/renew', [
-    check('uid', 'uid is required').not().isEmpty(),
-    check('token', 'token is required').not().isEmpty(),
-    validateFields
-] , renewToken)
+router.post('/renew', validateToken ,renewToken)
 
 module.exports = router;

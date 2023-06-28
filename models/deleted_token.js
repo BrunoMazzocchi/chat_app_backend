@@ -1,9 +1,10 @@
 const {Schema, model} = require('mongoose');
 
 const DeletedTokenschema = Schema({
+ 
     token: {
         type: String,
-        required: [true, 'Token is required']
+        required: [false, 'Token is required']
     },
     date : {
         type: Date,
