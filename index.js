@@ -28,7 +28,7 @@ app.use(express.static(publicPath));
 
 // My routes
 app.use('/api/login', require('./routes/auth'));
-
+app.use('/api/users', require('./routes/users'));
 
 app.listen(process.env.PORT, (err) => {
     if (err) {
